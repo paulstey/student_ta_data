@@ -104,6 +104,37 @@ count_times_ta <- function(id, dat) {
     return(cnt)
 }
 
+
+is_grader <- function(title) {
+    pos <- grep("grader", tolower(title))
+    if (length(pos) > 0) {
+        res <- TRUE 
+    } else if (length(pos) == 0) {
+        res <- FALSE 
+    }
+    return(res)
+}
+
+
+position_type <- function(id, dat) {
+    row_indcs <- which(dat[, "ID"] == id) 
+    titles_ugly <- unique(dat[row_indcs, "Title"])
+    titles <- titles_ugly[titles_ugly != ""]
+    n <- length(titles)
+    was_grader <- sapply(titles, is_grader)
+    
+    if (sum(was_grader) == 0) {
+        res <- "TA"
+    } else if (sum(was_grader) == n) {
+        res <- "Grader"
+    } else if (sum(was_grader) > 0) {
+        res <- "Both TA and Grader"
+    }
+    return(res) 
+}
+
+
+
 # testing
 count_times_ta("B00644792", uta_stdemp) == 2
 count_times_ta("B00370646", uta_stdemp) == 4
@@ -120,6 +151,7 @@ clean_undergrads_data <- function(dat, dept_hash) {
     res[, "employing_dept"] <- rep(NA, n)             # could be multiple 
     res[, "home_dept"] <- rep(NA, n)
     res[, "ta_n_times"] <- rep(NA, n)
+    res[, "position_type"] <- rep(NA, n)
     
     for (i in 1:n) {
         idx <- which(dat[, "ID"] == res[i, "id"])[1]  # assume ID-name matches perfect
@@ -128,6 +160,7 @@ clean_undergrads_data <- function(dat, dept_hash) {
         res[i, "employing_dept"] <- employing_dept(res[i, "id"], dat)
         res[i, "home_dept"] <- home_dept(res[i, "id"], dat, dept_hash)
         res[i, "ta_n_times"] <- count_times_ta(res[i, "id"], dat)
+        res[i, "position_type"] <- position_type(res[i, "id"], dat)
     }
     return(res)
 }
@@ -140,7 +173,7 @@ uta_clean2 <- clean_undergrads_data(uta_wd, dept_hash)
 
 # combine undergrad TA data
 names(uta_stdemp)[14] <- "Term"
-common_cols <- c("ID", "Department", "Dept", "Term")
+common_cols <- c("ID", "Department", "Dept", "Term", "Title")
 
 uta <- as.data.frame(rbind(uta_wd[, common_cols], 
                            uta_stdemp[, common_cols]))
@@ -173,6 +206,9 @@ p2 <- ggplot(uta_clean, aes(factor(ta_n_times))) +
 
 p2
 
+
+
+# counts
 length(unique(c(uta_wd$ID, uta_stdemp$ID)))   # 999 total undergrad TAs and RAs 
 length(unique(c(gta$ID, gra$ID)))             # 916 total grad TAs and RAs 
 
