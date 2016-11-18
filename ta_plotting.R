@@ -312,9 +312,9 @@ p5 <- ggplot(ga_clean, aes(factor(appointment))) +
     theme(text = element_text(size = 12), 
           axis.text.x = element_text(hjust = 1),
           plot.title = element_text(size = 20, hjust = 0.5)) +
-    xlab(NULL) +
+    xlab("Number of TA- and RA-ships") +
     ylab("Students") +
-    ggtitle("Graduate Students")
+    ggtitle("Graduate Students' Semesters of TA- and RA-ship")
 
 p5
 table(ga_clean[, "appointment"])
