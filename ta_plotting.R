@@ -115,6 +115,12 @@ is_grader <- function(title) {
     return(res)
 }
 
+# testing
+count_times_ta("B00644792", uta_stdemp) == 2
+count_times_ta("B00370646", uta_stdemp) == 4
+count_times_ta("B00633190", uta_stdemp) == 6
+
+
 
 position_type <- function(id, dat) {
     row_indcs <- which(dat[, "ID"] == id) 
@@ -122,6 +128,10 @@ position_type <- function(id, dat) {
     titles <- titles_ugly[titles_ugly != ""]
     n <- length(titles)
     was_grader <- sapply(titles, is_grader)
+    
+    if (length(was_grader) == 0) {
+        return(NA)
+    }
     
     if (sum(was_grader) == 0) {
         res <- "TA"
@@ -133,12 +143,10 @@ position_type <- function(id, dat) {
     return(res) 
 }
 
-
-
 # testing
-count_times_ta("B00644792", uta_stdemp) == 2
-count_times_ta("B00370646", uta_stdemp) == 4
-count_times_ta("B00633190", uta_stdemp) == 6
+position_type("B00644792", uta_stdemp) == "Grader"
+position_type("B00900429", uta_wd) == "TA"
+is.na(position_type("B00713260", uta_wd))
 
 
 
@@ -176,10 +184,10 @@ names(uta_stdemp)[14] <- "Term"
 common_cols <- c("ID", "Department", "Dept", "Term", "Title")
 
 uta <- as.data.frame(rbind(uta_wd[, common_cols], 
-                           uta_stdemp[, common_cols]))
+                           uta_stdemp[, common_cols]), stringsAsFactors = FALSE)
 
 
-
+uta_all_clean <- clean_undergrads_data(uta)
 
 
 # plotting
