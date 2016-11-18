@@ -155,7 +155,6 @@ clean_undergrads_data <- function(dat, dept_hash) {
     n <- nrow(res)
     
     # initialize empty columns in result dataframe
-    res[, "name"] <- rep(NA, n)
     res[, "employing_dept"] <- rep(NA, n)             # could be multiple 
     res[, "home_dept"] <- rep(NA, n)
     res[, "ta_n_times"] <- rep(NA, n)
@@ -164,7 +163,6 @@ clean_undergrads_data <- function(dat, dept_hash) {
     for (i in 1:n) {
         idx <- which(dat[, "ID"] == res[i, "id"])[1]  # assume ID-name matches perfect
         
-        res[i, "name"] <- dat[idx, "Name"] 
         res[i, "employing_dept"] <- employing_dept(res[i, "id"], dat)
         res[i, "home_dept"] <- home_dept(res[i, "id"], dat, dept_hash)
         res[i, "ta_n_times"] <- count_times_ta(res[i, "id"], dat)
@@ -173,26 +171,24 @@ clean_undergrads_data <- function(dat, dept_hash) {
     return(res)
 }
 
-
-uta_clean <- clean_undergrads_data(uta_stdemp, dept_hash)
-
-uta_clean2 <- clean_undergrads_data(uta_wd, dept_hash)
+# these un-aggregated data sets are probably useless
+uta_stdemp_clean <- clean_undergrads_data(uta_stdemp, dept_hash)
+uta_wd_clean <- clean_undergrads_data(uta_wd, dept_hash)
 
 
 # combine undergrad TA data
 names(uta_stdemp)[14] <- "Term"
 common_cols <- c("ID", "Department", "Dept", "Term", "Title")
 
-uta <- as.data.frame(rbind(uta_wd[, common_cols], 
+uta_combine <- as.data.frame(rbind(uta_wd[, common_cols], 
                            uta_stdemp[, common_cols]), stringsAsFactors = FALSE)
 
 
-uta_all_clean <- clean_undergrads_data(uta)
+uta <- clean_undergrads_data(uta_combine, dept_hash)
 
 
-# plotting
-
-p1 <- ggplot(uta_clean, aes(employing_dept)) + 
+# plotting student TA-ing
+p1 <- ggplot(uta, aes(employing_dept)) + 
     geom_bar(colour = "lightblue", fill = "skyblue") +
     theme(text = element_text(size = 12), 
           axis.text.x = element_text(angle = 45, hjust = 1),
@@ -202,9 +198,10 @@ p1 <- ggplot(uta_clean, aes(employing_dept)) +
     ggtitle("Undergraduate Students TA-ing")
 
 p1
+table(uta[, "employing_dept"])
 
-
-p2 <- ggplot(uta_clean, aes(factor(ta_n_times))) + 
+# plotting distribution of number of courses undergrads TA
+p2 <- ggplot(uta, aes(factor(ta_n_times))) + 
     geom_bar(colour = "lightblue", fill = "skyblue", width = 0.95) +
     theme(text = element_text(size = 12), 
           plot.title = element_text(size = 20, hjust = 0.5)) +
@@ -213,10 +210,30 @@ p2 <- ggplot(uta_clean, aes(factor(ta_n_times))) +
     ggtitle("Undergraduate TAs")
 
 p2
+table(uta[, "ta_n_times"])
 
+
+
+# grad student data
+grad_ra_dept <- function(grad_dept, dept_hash) {
+    n <- length(grad_dept)
+    res <- rep(NA, n)
+    
+    for (i in 1:n) {
+        dept <- dept_hash[[grad_dept[i]]]
+        if (!is.null(dept)) {
+            res[i] <- dept
+        }
+    }
+    return(res)
+}
+
+gra[, "Department"] <- grad_ra_dept(gra[, "Appointment.Department"], dept_hash)
+gta[, "Department"] <- gta[, "DEPARTMENT_DESC"]
 
 
 # counts
 length(unique(c(uta_wd$ID, uta_stdemp$ID)))   # 999 total undergrad TAs and RAs 
 length(unique(c(gta$ID, gra$ID)))             # 916 total grad TAs and RAs 
+
 
